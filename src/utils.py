@@ -12,3 +12,11 @@ def seed_everything (seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
     set_seed(seed, reproducible=True)
+
+
+def generate_split(df, split_counts, random_seed):
+    idx = np.array([])
+    for k, count in list(split_counts.items()):
+        idx = np.concatenate([idx, df[df['FEVI10'] == k].sample(count, random_state=random_seed).index], axis=0)
+
+    return idx
