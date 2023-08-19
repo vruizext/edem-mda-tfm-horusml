@@ -14,6 +14,12 @@ def seed_everything (seed):
     set_seed(seed, reproducible=True)
 
 
+@patch
+def ls_sorted(self:Path):
+    "Equivalente a `ls` pero ordenando por número de la frame"
+    return self.ls().sorted(key=lambda f: int(f.with_suffix('').name))
+
+
 def generate_split(df, split_counts, random_seed):
     idx = np.array([])
     for k, count in list(split_counts.items()):
