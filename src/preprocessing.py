@@ -183,3 +183,39 @@ def oversampling(df, num_img, counts, transform):
             num_new -= 1
 
     return new_df
+
+# esta clase nos permite manejar un conjunto de imágenes como una tupla
+class ImageTuple(fastuple):
+    "A tuple of PILImages"
+    def show(self, ctx=None, **kwargs):
+        n = len(self)
+        img0, img1, img2= self[0], self[n//2], self[n-1]
+        if not isinstance(img1, Tensor):
+            t0, t1,t2 = tensor(img0), tensor(img1),tensor(img2)
+            t0, t1,t2 = t0.permute(2,0,1), t1.permute(2,0,1),t2.permute(2,0,1)
+        else: t0, t1,t2 = img0, img1,img2
+        return show_image(torch.cat([t0,t1,t2], dim=2), ctx=ctx, **kwargs)
+
+
+# esta clase obtiene las frames de un video y las devuelve en forma de tupla
+class ImageTupleTfm(Transform):
+    def __init__(self, start_frame=0, seq_len=20):
+        store_attr()
+
+    def encodes(self, path: Path):
+        frames = path.ls_sorted()
+        n_frames = len(frames)
+
+        # nos quedamos con max_frames, empezando en start_frame
+        if n_frames < (self.start_frame + self.seq_len):
+          self.start_frame = max(0, n_frames - self.seq_len)
+
+        # si no tenemos suficientes frames, replicamos
+        if n_frames < self.seq_len:
+          new_frames = self.seq_len - n_frames
+          for n in range(0, new_frames):
+            frames.append(frames[n % n_frames])
+
+        s = slice(self.start_frame, self.start_frame + self.seq_len)
+        return ImageTuple(tuple(PILImage.create(f) for f in frames[s]))
+
